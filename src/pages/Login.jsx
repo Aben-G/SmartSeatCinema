@@ -13,8 +13,8 @@ function Login() {
 
     const cleanUsername = username.trim();
 
-    if (!cleanUsername || !password.trim()) {
-      setError('Enter both username and password to continue.');
+    if (!cleanUsername) {
+      setError('Enter a username to continue.');
       return;
     }
 
@@ -38,7 +38,6 @@ function Login() {
           <input
             type="text"
             name="username"
-            required
             placeholder="Please Enter Your Employee UserName"
             value={username}
             onChange={e => setUsername(e.target.value)}
@@ -50,7 +49,6 @@ function Login() {
           <input
             type="password"
             name="password"
-            required
             placeholder="**************"
             value={password}
             onChange={e => setPassword(e.target.value)}
