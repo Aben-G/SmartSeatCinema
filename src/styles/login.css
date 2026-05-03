@@ -1,0 +1,184 @@
+body {
+  margin: 0;
+  font-family: var(--font-sans);
+  color: var(--text);
+  height: 100vh;
+  overflow: hidden;
+}
+
+/* MAIN WRAPPER */
+.LoginOverlay {
+  height: 100vh;
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  position: relative;
+  z-index: 1;
+
+  background: url("https://images.unsplash.com/photo-1489599849927-2ee91cede3ba");
+  background-size: cover;
+  background-position: center;
+  background-repeat: no-repeat;
+}
+
+/* DARK CINEMA OVERLAY */
+.LoginOverlay::before {
+  content: "";
+  position: absolute;
+  inset: 0;
+  background: radial-gradient(circle at center, rgba(0,0,0,0.4), rgba(0,0,0,0.9));
+  z-index: 0;
+}
+
+/* BRAND */
+.BrandLogo {
+  position: absolute;
+  top: 25px;
+  left: 30px;
+  font-family: Arial, Helvetica, sans-serif;
+  font-size: 18px;
+  letter-spacing: 4px;
+  color: rgba(255, 0, 0, 0.623);
+  z-index: 1;
+}
+
+.BrandHalf {
+  color: white;
+  text-decoration: underline;
+}
+
+/* CARD */
+.LoginContainer {
+  width: 380px;
+  padding: 32px;
+  display: flex;
+  flex-direction: column;
+  background: rgba(255, 255, 255, 0.051);
+  border: 1px solid rgba(255, 255, 255, 0.055);
+  border-radius: 20px;
+  backdrop-filter: blur(14px);
+  position: relative;
+  z-index: 1;
+}
+
+/* HEADER */
+.LoginHeader {
+  font-family: Arial, Helvetica, sans-serif;
+  font-size: 28px;
+  margin-left: 19%;
+  margin-bottom: 5px;
+  color: white;
+  background: linear-gradient(90deg, var(--accent), #c084fc);
+}
+
+.LoginP {
+  font-size: 15px;
+  color: white;
+  margin-bottom: 20px;
+  margin-left: 18%;
+  font-family: Arial, Helvetica, sans-serif;
+}
+
+/* INPUT GROUP */
+.InputGroup {
+  display: flex;
+  flex-direction: column;
+  margin-bottom: 14px;
+}
+
+.InputGroup label {
+  font-size: 10px;
+  letter-spacing: 1px;
+  color: white;
+  margin-bottom: 6px;
+  font-family: Arial, Helvetica, sans-serif;
+}
+
+input {
+  padding: 12px 14px;
+  border-radius: 10px;
+  border: 1px solid rgba(255, 255, 255, 0.205);
+  background: rgba(255, 255, 255, 0.14);
+  transition: 0.25s;
+}
+
+input::placeholder {
+  color: rgba(255, 255, 255, 0.3);
+}
+
+input:focus {
+  border-color: rgb(255, 255, 255);
+  color: white;
+  box-shadow: 0 2px 4px 1px rgba(255, 255, 255, 0.441);
+}
+
+.LoginUtils {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  font-family: Arial, Helvetica, sans-serif;
+  font-size: 11px;
+  color: var(--muted);
+  margin-bottom: 15px;
+}
+
+.CheckboxContainer {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  color: white;
+}
+
+.ForgotPass {
+  color: white;
+  cursor: pointer;
+}
+
+/* BUTTON */
+.LoginBtn {
+  width: 70%;
+  padding: 12px;
+  border: none;
+  border-radius: 10px;
+  background: rgba(179, 19, 19, 0.638);
+  color: white;
+  font-weight: 600;
+  cursor: pointer;
+  align-self: center;
+  transition: 0.25s ease;
+}
+
+.LoginBtn:hover {
+  transform: translateY(-2px);
+  box-shadow: 0 10px 25px var(--accent-glow);
+}
+
+.AdminText {
+  align-self: center;
+  color: rgba(255, 255, 255, 0.463);
+  font-size: smaller;
+  font-family: Arial, Helvetica, sans-serif;
+  margin: 10px;
+}
+
+.LoginAdminSpan {
+  color: red;
+}
+
+/* FOOTER */
+.LoginFooter {
+  position: absolute;
+  bottom: 20px;
+  width: 100%;
+  text-align: center;
+  z-index: 1;
+}
+
+.MutedText {
+  font-size: 11px;
+  color: rgba(255, 255, 255, 0.4);
+}
+
+.RedAccent {
+  color: var(--accent);
+}

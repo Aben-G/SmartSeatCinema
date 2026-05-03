@@ -1,0 +1,186 @@
+@import url('https://fonts.googleapis.com/css2?family=Bebas+Neue&family=DM+Sans:wght@300;400;500&display=swap');
+
+/* ── Sidebar Shell ── */
+.sidebar {
+  width: 220px;
+  min-width: 220px;
+  height: 100vh;
+  position: sticky;
+  top: 0;
+  display: flex;
+  flex-direction: column;
+  background: #0a0a0a;
+  padding: 24px 0 20px;
+  font-family: 'DM Sans', sans-serif;
+  overflow: hidden;
+}
+
+/* Red ambient glow at bottom */
+.sidebar::before {
+  content: '';
+  position: absolute;
+  bottom: -80px;
+  left: -60px;
+  width: 260px;
+  height: 260px;
+  background: radial-gradient(circle, rgba(160, 10, 10, 0.13) 0%, transparent 70%);
+  pointer-events: none;
+  z-index: 0;
+}
+
+/* ── Section Labels ── */
+.sb-section {
+  font-size: 9.5px;
+  font-weight: 500;
+  letter-spacing: 0.14em;
+  text-transform: uppercase;
+  color: rgba(255, 255, 255, 0.2);
+  padding: 12px 20px 5px;
+  position: relative;
+  z-index: 1;
+}
+
+/* ── Nav Items ── */
+.sb-item {
+  display: flex;
+  align-items: center;
+  margin: 1px 10px;
+  padding: 9px 12px;
+  border-radius: 6px;
+  font-size: 13.5px;
+  font-weight: 400;
+  color: rgba(255, 255, 255, 0.4);
+  text-decoration: none;
+  cursor: pointer;
+  position: relative;
+  z-index: 1;
+  transition: background 0.16s ease, color 0.16s ease;
+}
+
+.sb-item:hover {
+  background: rgba(255, 255, 255, 0.04);
+  color: rgba(255, 255, 255, 0.75);
+}
+
+/* Active state */
+.sb-item.active {
+  background: rgba(180, 20, 20, 0.15);
+  color: #e03030;
+  font-weight: 500;
+}
+
+/* Red accent bar on left edge */
+.sb-item.active::before {
+  content: '';
+  position: absolute;
+  left: -10px;
+  top: 50%;
+  transform: translateY(-50%);
+  width: 3px;
+  height: 18px;
+  background: #cc1a1a;
+  border-radius: 0 3px 3px 0;
+}
+
+/* ── Footer ── */
+.sb-footer {
+margin-top: 290px;
+  padding: 14px 10px 0;
+  position: relative;
+  z-index: 1;
+}
+
+.sb-logout {
+  width: 100%;
+  padding: 9px 12px;
+  background: rgba(180, 20, 20, 0.327);
+  border: 1px solid rgba(180, 20, 20, 0.25);
+  border-radius: 6px;
+  color: rgba(255, 255, 255, 0.542);
+  font-family: 'DM Sans', sans-serif;
+  font-size: 13px;
+  cursor: pointer;
+  text-align: center;
+  transition: background 0.16s ease, color 0.16s ease;
+}
+
+.sb-logout:hover {
+  background: rgba(180, 20, 20, 0.1);
+  color: rgba(255, 255, 255, 0.65);
+}
+
+/* ── Logout Modal ── */
+.sb-modal-overlay {
+  position: fixed;
+  inset: 0;
+  background: rgba(0, 0, 0, 0.65);
+  backdrop-filter: blur(4px);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  z-index: 9999;
+}
+
+.sb-modal {
+  background: #141414;
+  border: 1px solid rgba(180, 20, 20, 0.25);
+  border-radius: 14px;
+  padding: 28px 24px;
+  width: 320px;
+  max-width: 90vw;
+}
+
+.sb-modal-title {
+  font-family: 'Bebas Neue', sans-serif;
+  font-size: 22px;
+  letter-spacing: 0.08em;
+  color: #f0f0f0;
+  margin: 0 0 8px;
+}
+
+.sb-modal-msg {
+  font-size: 13px;
+  color: rgba(255, 255, 255, 0.4);
+  margin: 0 0 24px;
+}
+
+.sb-modal-actions {
+  display: flex;
+  gap: 10px;
+}
+
+.sb-modal-cancel {
+  flex: 1;
+  padding: 10px;
+  background: transparent;
+  border: 1px solid rgba(255, 255, 255, 0.1);
+  border-radius: 8px;
+  color: rgba(255, 255, 255, 0.4);
+  font-family: 'DM Sans', sans-serif;
+  font-size: 13px;
+  cursor: pointer;
+  transition: background 0.15s, color 0.15s;
+}
+
+.sb-modal-cancel:hover {
+  background: rgba(255, 255, 255, 0.05);
+  color: rgba(255, 255, 255, 0.7);
+}
+
+.sb-modal-confirm {
+  flex: 1;
+  padding: 10px;
+  background: #cc1a1a;
+  border: none;
+  border-radius: 8px;
+  color: #fff;
+  font-family: 'DM Sans', sans-serif;
+  font-size: 13px;
+  font-weight: 500;
+  cursor: pointer;
+  transition: background 0.15s;
+}
+
+.sb-modal-confirm:hover {
+  background: #b81515;
+}
