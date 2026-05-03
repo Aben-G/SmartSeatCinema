@@ -55,8 +55,6 @@ function Login() {
           />
         </div>
 
-        {error ? <p className="LoginError" role="alert">{error}</p> : null}
-
         <div className="LoginUtils">
           <label className="CheckboxContainer">
             <input type="checkbox" />
@@ -76,6 +74,8 @@ function Login() {
           System version 4.2.0-<span className='RedAccent'>PREMIUM</span>
         </p>
       </div>
+
+      {error ? <p className="LoginError" role="alert" aria-live="polite">{error}</p> : null}
 
     </div>
   );
