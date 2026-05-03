@@ -23,9 +23,9 @@ const EMPTY_FORM = {
 };
 
 function MoviesPage() {
-  const [movies, setMovies] = useState([]); // ← replace with DB fetch
+  const [movies, setMovies] = useState([]); // ← be database ekeyrewalehu
   const [showModal, setShowModal] = useState(false);
-  const [editTarget, setEditTarget] = useState(null); // null = adding new
+  const [editTarget, setEditTarget] = useState(null); // null new mihonew for now
   const [form, setForm] = useState(EMPTY_FORM);
   const [posterPreview, setPosterPreview] = useState('');
   const [deleteConfirm, setDeleteConfirm] = useState(null);
@@ -34,7 +34,7 @@ function MoviesPage() {
   const [filterStatus, setFilterStatus] = useState('All');
   const [errors, setErrors] = useState({});
 
-  /* ── helpers ── */
+ 
   const openAdd = () => {
     setEditTarget(null);
     setForm(EMPTY_FORM);
@@ -69,7 +69,7 @@ function MoviesPage() {
     if (!file) return;
     const url = URL.createObjectURL(file);
     setPosterPreview(url);
-    set('poster', url); // in production: upload to storage, store URL
+    set('poster', url); 
   };
 
   const validate = () => {
@@ -177,7 +177,7 @@ function MoviesPage() {
         </div>
       )}
 
-      {/* ── ADD / EDIT MODAL ── */}
+      
       {showModal && (
         <div className="mv-overlay" onClick={closeModal}>
           <div className="mv-modal" onClick={(e) => e.stopPropagation()}>
@@ -227,7 +227,7 @@ function MoviesPage() {
                 </div>
               </div>
 
-              {/* RIGHT: FIELDS */}
+             
               <div className="mv-modal-right">
 
                 {/* TITLE */}
@@ -238,7 +238,7 @@ function MoviesPage() {
                   {errors.title && <span className="mv-err">{errors.title}</span>}
                 </div>
 
-                {/* HALL + DURATION */}
+              
                 <div className="mv-field-row">
                   <div className={`mv-field${errors.hall ? ' mv-field--err' : ''}`}>
                     <label className="mv-label">Hall *</label>
