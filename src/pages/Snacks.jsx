@@ -1,5 +1,7 @@
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import '../styles/SnacksPage.css';
+
+const API_BASE = 'http://localhost:5000/api';
 
 const CATEGORIES = ['Food', 'Drink', 'Combo', 'Dessert', 'Other'];
 
@@ -24,6 +26,20 @@ function SnacksPage() {
   const [filterCat, setFilterCat] = useState('All');
   const [errors, setErrors] = useState({});
 
+  useEffect(() => {
+    fetchSnacks();
+  }, []);
+
+  const fetchSnacks = async () => {
+    try {
+      const response = await fetch(`${API_BASE}/snacks`);
+      const data = await response.json();
+      setSnacks(data);
+    } catch (error) {
+      console.error('Error fetching snacks:', error);
+    }
+  };
+
   const openAdd = () => {
     setEditTarget(null);
     setForm(EMPTY_FORM);
@@ -33,7 +49,7 @@ function SnacksPage() {
   };
 
   const openEdit = (s) => {
-    setEditTarget(s.id);
+    setEditTarget(s._id);
     setForm({ ...s });
     setImagePreview(s.image || '');
     setErrors({});
@@ -62,17 +78,47 @@ function SnacksPage() {
     return Object.keys(e).length === 0;
   };
 
-  const handleSave = () => {
+  const handleSave = async () => {
     if (!validate()) return;
-    if (editTarget !== null) {
-      setSnacks((p) => p.map((s) => (s.id === editTarget ? { ...form, id: editTarget } : s)));
-    } else {
-      setSnacks((p) => [...p, { ...form, id: Date.now() }]);
+    try {
+      if (editTarget !== null) {
+        const response = await fetch(`${API_BASE}/snacks/${editTarget}`, {
+          method: 'PUT',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify(form),
+        });
+        if (response.ok) {
+          fetchSnacks();
+        }
+      } else {
+        const response = await fetch(`${API_BASE}/snacks`, {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify(form),
+        });
+        if (response.ok) {
+          fetchSnacks();
+        }
+      }
+      closeModal();
+    } catch (error) {
+      console.error('Error saving snack:', error);
     }
-    closeModal();
   };
 
-  const handleDelete = (id) => { setSnacks((p) => p.filter((s) => s.id !== id)); setDeleteConfirm(null); };
+  const handleDelete = async (id) => {
+    try {
+      const response = await fetch(`${API_BASE}/snacks/${id}`, {
+        method: 'DELETE',
+      });
+      if (response.ok) {
+        fetchSnacks();
+      }
+    } catch (error) {
+      console.error('Error deleting snack:', error);
+    }
+    setDeleteConfirm(null);
+  };
 
   const toggleAvailable = (id) => {
     setSnacks((p) => p.map((s) => s.id === id ? { ...s, available: !s.available } : s));
@@ -147,7 +193,7 @@ function SnacksPage() {
               {/* ACTIONS */}
               <div className="sn-card-actions">
                 <button className="sn-action-edit" onClick={() => openEdit(s)}>Edit</button>
-                <button className="sn-action-delete" onClick={() => setDeleteConfirm(s.id)}>Delete</button>
+                <button className="sn-action-delete" onClick={() => setDeleteConfirm(s._id)}>Delete</button>
               </div>
 
             </div>

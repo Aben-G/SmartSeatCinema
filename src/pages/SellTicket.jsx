@@ -1,5 +1,7 @@
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import "../styles/sellTicket.css";
+
+const API_BASE = 'http://localhost:5000/api';
 
 const ROWS = ["A", "B", "C", "D", "E", "F", "G", "H", "I", "J"];
 const COLS = Array.from({ length: 16 }, (_, i) => i + 1);
@@ -14,12 +16,34 @@ function SellTicket() {
   const [showSnacks, setShowSnacks] = useState(false);
   const [snackCart, setSnackCart] = useState({});
   const [confirmed, setConfirmed] = useState(false);
+  const [movies, setMovies] = useState([]);
+  const [snacks, setSnacks] = useState([]);
+  const [occupiedSeats, setOccupiedSeats] = useState(new Set());
 
- 
-  const movies = [];        
-  const snacks = [];        
-  const occupiedSeats = new Set(); 
-  // ──────────────────────────────────────────
+  useEffect(() => {
+    fetchMovies();
+    fetchSnacks();
+  }, []);
+
+  const fetchMovies = async () => {
+    try {
+      const response = await fetch(`${API_BASE}/movies`);
+      const data = await response.json();
+      setMovies(data);
+    } catch (error) {
+      console.error('Error fetching movies:', error);
+    }
+  };
+
+  const fetchSnacks = async () => {
+    try {
+      const response = await fetch(`${API_BASE}/snacks`);
+      const data = await response.json();
+      setSnacks(data);
+    } catch (error) {
+      console.error('Error fetching snacks:', error);
+    }
+  };
 
   const toggleSeat = (seat) => {
     if (!selectedMovie || occupiedSeats.has(seat)) return;
@@ -42,11 +66,34 @@ function SellTicket() {
     return sum + (s ? s.price * qty : 0);
   }, 0);
 
-  const ticketTotal = selectedSeats.length * (selectedMovie?.price || 0);
+  const ticketTotal = selectedSeats.length * (selectedMovie?.ticketPrice || 0);
   const grandTotal = ticketTotal + snackTotal;
   const canConfirm = selectedMovie && selectedSeats.length > 0 && payment;
 
-  const handleConfirm = () => { if (canConfirm) setConfirmed(true); };
+  const handleConfirm = async () => {
+    if (!canConfirm) return;
+    try {
+      const ticketData = {
+        customerName,
+        movieId: selectedMovie._id,
+        movieTitle: selectedMovie.title,
+        seats: selectedSeats,
+        snacks: snackCart,
+        payment,
+        total: grandTotal,
+      };
+      const response = await fetch(`${API_BASE}/tickets`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(ticketData),
+      });
+      if (response.ok) {
+        setConfirmed(true);
+      }
+    } catch (error) {
+      console.error('Error confirming ticket:', error);
+    }
+  };
 
   const handleReset = () => {
     setConfirmed(false);
@@ -102,7 +149,7 @@ function SellTicket() {
                 <div className="st-chips">
                   <span className="st-chip">{selectedMovie.time}</span>
                   <span className="st-chip">{selectedMovie.hall}</span>
-                  <span className="st-chip st-chip--red">ETB {selectedMovie.price} / seat</span>
+                  <span className="st-chip st-chip--red">ETB {selectedMovie.ticketPrice} / seat</span>
                 </div>
               </div>
             </>
@@ -165,7 +212,7 @@ function SellTicket() {
               <div className="st-dlist">
                 <div className="st-drow"><span>Hall</span><strong>{selectedMovie.hall}</strong></div>
                 <div className="st-drow"><span>Time</span><strong>{selectedMovie.time}</strong></div>
-                <div className="st-drow"><span>Per seat</span><strong className="st-red">ETB {selectedMovie.price}</strong></div>
+                <div className="st-drow"><span>Per seat</span><strong className="st-red">ETB {selectedMovie.ticketPrice}</strong></div>
               </div>
             </>
           ) : (
@@ -254,7 +301,7 @@ function SellTicket() {
               <div className="st-movie-list">
                 {movies.map((m) => (
                   <div
-                    key={m.id}
+                    key={m._id}
                     className={`st-movie-card${selectedMovie?.id === m.id ? " is-active" : ""}`}
                     onClick={() => {
                       setSelectedMovie(m);
