@@ -1,8 +1,7 @@
-import { useState, useMemo } from 'react';
+import { useState, useEffect, useMemo } from 'react';
 import '../styles/HistoryPage.css';
 
-const sales = [];
-// ──────────────────────────────────────────────────
+const API_BASE = 'http://localhost:5000/api';
 
 const PAYMENT_METHODS = ['All', 'Cash', 'Card', 'Telebirr', 'CBE Birr'];
 
@@ -85,6 +84,7 @@ function exportCSV(data) {
 }
 
 export default function HistoryPage() {
+  const [sales, setSales] = useState([]);
   const [search, setSearch]         = useState('');
   const [typeFilter, setTypeFilter] = useState('All');   // All | ticket | snack
   const [payFilter, setPayFilter]   = useState('All');
@@ -93,6 +93,32 @@ export default function HistoryPage() {
   const [detail, setDetail]         = useState(null);
   const [page, setPage]             = useState(1);
   const PER_PAGE = 12;
+
+  useEffect(() => {
+    fetchHistory();
+  }, []);
+
+  const fetchHistory = async () => {
+    try {
+      const response = await fetch(`${API_BASE}/history`);
+      const data = await response.json();
+      // Map tickets to sales format
+      const mapped = data.map(ticket => ({
+        id: ticket._id,
+        date: ticket.createdAt,
+        type: 'ticket',
+        movie: ticket.movieTitle,
+        customer: ticket.customerName || 'Walk-in',
+        payment: ticket.payment,
+        total: ticket.total,
+        seats: ticket.seats,
+        items: [], // For now
+      }));
+      setSales(mapped);
+    } catch (error) {
+      console.error('Error fetching history:', error);
+    }
+  };
 
   const filtered = useMemo(() => {
     return sales.filter(s => {

@@ -2,13 +2,15 @@ import { useState } from "react";
 import { useNavigate } from "react-router-dom";
 import '../styles/login.css';
 
+const API_BASE = 'http://localhost:5000/api';
+
 function Login() {
   const navigate = useNavigate();
   const [username, setUsername] = useState('');
   const [password, setPassword] = useState('');
   const [error, setError] = useState('');
 
-  const handleLogin = (e) => {
+  const handleLogin = async (e) => {
     e.preventDefault();
 
     const cleanUsername = username.trim();
@@ -18,9 +20,24 @@ function Login() {
       return;
     }
 
-    setError('');
-    localStorage.setItem('ssc_user', cleanUsername);
-    navigate("/dashboard");
+    try {
+      const response = await fetch(`${API_BASE}/login`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ username: cleanUsername, password }),
+      });
+      const data = await response.json();
+      if (data.success) {
+        setError('');
+        localStorage.setItem('ssc_user', cleanUsername);
+        navigate("/dashboard");
+      } else {
+        setError('Invalid credentials');
+      }
+    } catch (error) {
+      console.error('Login error:', error);
+      setError('Login failed');
+    }
   };
 
   return (

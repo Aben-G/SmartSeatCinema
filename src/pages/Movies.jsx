@@ -1,5 +1,7 @@
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import '../styles/MoviesPage.css';
+
+const API_BASE = 'http://localhost:5000/api';
 
 const GENRES = ['Action', 'Comedy', 'Drama', 'Horror', 'Sci-Fi', 'Thriller', 'Romance', 'Animation', 'Documentary', 'Fantasy', 'Crime', 'Adventure'];
 const AGE_RATINGS = ['G', 'PG', 'PG-13', 'R', 'NC-17'];
@@ -34,6 +36,20 @@ function MoviesPage() {
   const [filterStatus, setFilterStatus] = useState('All');
   const [errors, setErrors] = useState({});
 
+  useEffect(() => {
+    fetchMovies();
+  }, []);
+
+  const fetchMovies = async () => {
+    try {
+      const response = await fetch(`${API_BASE}/movies`);
+      const data = await response.json();
+      setMovies(data);
+    } catch (error) {
+      console.error('Error fetching movies:', error);
+    }
+  };
+
  
   const openAdd = () => {
     setEditTarget(null);
@@ -44,7 +60,7 @@ function MoviesPage() {
   };
 
   const openEdit = (movie) => {
-    setEditTarget(movie.id);
+    setEditTarget(movie._id);
     setForm({ ...movie });
     setPosterPreview(movie.poster || '');
     setErrors({});
@@ -84,18 +100,45 @@ function MoviesPage() {
     return Object.keys(e).length === 0;
   };
 
-  const handleSave = () => {
+  const handleSave = async () => {
     if (!validate()) return;
-    if (editTarget !== null) {
-      setMovies((p) => p.map((m) => (m.id === editTarget ? { ...form, id: editTarget } : m)));
-    } else {
-      setMovies((p) => [...p, { ...form, id: Date.now() }]);
+    try {
+      if (editTarget !== null) {
+        const response = await fetch(`${API_BASE}/movies/${editTarget}`, {
+          method: 'PUT',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify(form),
+        });
+        if (response.ok) {
+          fetchMovies(); // Refresh list
+        }
+      } else {
+        const response = await fetch(`${API_BASE}/movies`, {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify(form),
+        });
+        if (response.ok) {
+          fetchMovies(); // Refresh list
+        }
+      }
+      closeModal();
+    } catch (error) {
+      console.error('Error saving movie:', error);
     }
-    closeModal();
   };
 
-  const handleDelete = (id) => {
-    setMovies((p) => p.filter((m) => m.id !== id));
+  const handleDelete = async (id) => {
+    try {
+      const response = await fetch(`${API_BASE}/movies/${id}`, {
+        method: 'DELETE',
+      });
+      if (response.ok) {
+        fetchMovies(); // Refresh list
+      }
+    } catch (error) {
+      console.error('Error deleting movie:', error);
+    }
     setDeleteConfirm(null);
   };
 
@@ -143,7 +186,7 @@ function MoviesPage() {
       ) : (
         <div className="mv-grid">
           {filtered.map((m) => (
-            <div className="mv-card" key={m.id}>
+            <div className="mv-card" key={m._id}>
               <div className="mv-card-poster">
                 {m.poster
                   ? <img src={m.poster} alt={m.title} />
@@ -170,7 +213,7 @@ function MoviesPage() {
               </div>
               <div className="mv-card-actions">
                 <button className="mv-action-edit" onClick={() => openEdit(m)}>Edit</button>
-                <button className="mv-action-delete" onClick={() => setDeleteConfirm(m.id)}>Delete</button>
+                <button className="mv-action-delete" onClick={() => setDeleteConfirm(m._id)}>Delete</button>
               </div>
             </div>
           ))}
