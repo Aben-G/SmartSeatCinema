@@ -11,7 +11,7 @@ const app = express();
 const PORT = process.env.PORT || 5000;
 
 // Connect to MongoDB
-mongoose.connect('mongodb://localhost:27017/smartseatcinema', {
+mongoose.connect('mongodb://localhost:27017/smartseatcinema'|| 'mongodb://hamid_user:hamid_atlas@ac-vxrgfce-shard-00-00.dj5cedo.mongodb.net:27017,ac-vxrgfce-shard-00-01.dj5cedo.mongodb.net:27017,ac-vxrgfce-shard-00-02.dj5cedo.mongodb.net:27017/?ssl=true&replicaSet=atlas-oidezz-shard-0&authSource=admin&appName=smartcinema', {
   useNewUrlParser: true,
   useUnifiedTopology: true,
 })
