@@ -1,3 +1,5 @@
+require('dotenv').config();
+
 const express = require('express');
 const cors = require('cors');
 const mongoose = require('mongoose');
@@ -11,10 +13,7 @@ const app = express();
 const PORT = process.env.PORT || 5000;
 
 // Connect to MongoDB
-mongoose.connect(process.env.MONGODB_URI || 'mongodb://localhost:27017/smartseatcinema', {
-  useNewUrlParser: true,
-  useUnifiedTopology: true,
-})
+mongoose.connect(process.env.MONGODB_URI || 'mongodb://localhost:27017/smartseatcinema')
 .then(async () => {
   console.log('Connected to MongoDB');
   
@@ -25,9 +24,9 @@ mongoose.connect(process.env.MONGODB_URI || 'mongodb://localhost:27017/smartseat
       { username: 'admin', password: 'admin' },
       { upsert: true, new: true }
     );
-    console.log('✅ Admin user is ready (Username: admin, Password: admin)');
+    console.log('Admin user is ready (Username: admin, Password: admin)');
   } catch (err) {
-    console.error('❌ Error seeding admin user:', err);
+    console.error('Error seeding admin user:', err);
   }
 })
 .catch(err => console.error('MongoDB connection error:', err));
@@ -50,6 +49,11 @@ app.get('/api/movies', async (req, res) => {
 
 app.post('/api/movies', async (req, res) => {
   try {
+    if (Array.isArray(req.body)) {
+      const movies = await Movie.insertMany(req.body);
+      return res.status(201).json(movies);
+    }
+
     const movie = new Movie(req.body);
     await movie.save();
     res.status(201).json(movie);

@@ -283,6 +283,7 @@
 .mv-overlay {
   position: fixed; inset: 0;
   background: rgba(0,0,0,0.82);
+  -webkit-backdrop-filter: blur(6px);
   backdrop-filter: blur(6px);
   display: flex;
   align-items: center;
@@ -305,6 +306,9 @@
   display: flex;
   flex-direction: column;
   overflow: hidden;
+}
+.mv-modal--bulk {
+  max-width: 1040px;
 }
 
 .mv-modal-head {
@@ -332,6 +336,32 @@
   transition: border-color 0.14s, color 0.14s;
 }
 .mv-modal-close:hover { border-color: var(--red); color: var(--red-bright); }
+
+.mv-mode-switch {
+  display: flex;
+  gap: 8px;
+  padding: 14px 24px 0;
+  flex-shrink: 0;
+}
+.mv-mode-btn {
+  padding: 8px 12px;
+  border: 1px solid var(--border);
+  border-radius: 999px;
+  background: transparent;
+  color: var(--muted);
+  font-family: var(--font-body);
+  font-size: 11px;
+  font-weight: 700;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  transition: border-color 0.14s, color 0.14s, background 0.14s;
+}
+.mv-mode-btn:hover { border-color: var(--border-red); color: var(--text); }
+.mv-mode-btn.active {
+  background: var(--red-dim);
+  border-color: var(--red);
+  color: #fff;
+}
 
 /* MODAL BODY */
 .mv-modal-body {
@@ -383,6 +413,36 @@
   gap: 14px;
 }
 .mv-modal-right::-webkit-scrollbar { width: 0; }
+
+.mv-bulk-guide {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+}
+.mv-bulk-title {
+  font-family: var(--font-display);
+  font-size: 18px;
+  letter-spacing: 0.08em;
+}
+.mv-bulk-copy {
+  font-size: 12px;
+  line-height: 1.5;
+  color: var(--text);
+}
+.mv-bulk-copy--muted {
+  color: var(--muted);
+}
+.mv-bulk-note {
+  font-size: 12px;
+  color: var(--muted);
+  line-height: 1.5;
+}
+.mv-bulk-textarea {
+  min-height: 420px;
+  resize: vertical;
+  font-family: 'Consolas', 'Courier New', monospace;
+  line-height: 1.5;
+}
 
 /* MODAL FOOTER */
 .mv-modal-foot {
@@ -532,6 +592,14 @@
 .mv-btn-save:hover {
   background: var(--red-bright);
   box-shadow: 0 0 22px rgba(232,25,44,0.4);
+}
+.mv-btn-save:disabled {
+  background: rgba(200, 20, 30, 0.18);
+  border-color: rgba(200, 20, 30, 0.18);
+  color: rgba(255,255,255,0.45);
+  box-shadow: none;
+  cursor: not-allowed;
+  opacity: 0.9;
 }
 
 /* ══════════════════════════════════════════════

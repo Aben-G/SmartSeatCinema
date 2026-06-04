@@ -3,7 +3,7 @@ import "../styles/sellTicket.css";
 
 const API_BASE = 'http://localhost:5000/api';
 
-const ROWS = ["A", "B", "C", "D", "E", "F", "G", "H", "I", "J"];
+const ROWS = ["A", "B", "C", "D", "E", "F", "G", "H", "I"];
 const COLS = Array.from({ length: 16 }, (_, i) => i + 1);
 const PAYMENT_METHODS = ["Cash", "Card", "Telebirr", "CBE Birr"];
 
@@ -24,6 +24,33 @@ function SellTicket() {
     fetchMovies();
     fetchSnacks();
   }, []);
+
+  useEffect(() => {
+    const loadOccupiedSeats = async () => {
+      if (!selectedMovie?._id) {
+        setOccupiedSeats(new Set());
+        return;
+      }
+
+      try {
+        const response = await fetch(`${API_BASE}/tickets`);
+        const tickets = await response.json();
+        const nextOccupiedSeats = new Set();
+
+        tickets
+          .filter((ticket) => String(ticket.movieId?._id || ticket.movieId) === String(selectedMovie._id))
+          .forEach((ticket) => {
+            (ticket.seats || []).forEach((seat) => nextOccupiedSeats.add(seat));
+          });
+
+        setOccupiedSeats(nextOccupiedSeats);
+      } catch (error) {
+        console.error('Error loading occupied seats:', error);
+      }
+    };
+
+    loadOccupiedSeats();
+  }, [selectedMovie]);
 
   const fetchMovies = async () => {
     try {
@@ -61,8 +88,36 @@ function SellTicket() {
     });
   };
 
+  const getSnackId = (snack) => snack._id || snack.id;
+
+  const getSnackCartQty = (snack) => {
+    const snackId = getSnackId(snack);
+    return snackCart[snackId] || 0;
+  };
+
+  const buildSnackCardStyle = (snack) => {
+    const image = snack.image;
+    return {
+      backgroundImage: image
+        ? `linear-gradient(180deg, rgba(8, 8, 10, 0.06) 0%, rgba(8, 8, 10, 0.28) 55%, rgba(8, 8, 10, 0.72) 100%), url("${image}")`
+        : 'linear-gradient(180deg, rgba(32, 32, 39, 0.95) 0%, rgba(22, 22, 26, 1) 100%)',
+    };
+  };
+
+  const getMovieArtwork = (movie) => movie?.poster || movie?.banner || '';
+
+  const pageBackdropStyle = selectedMovie?.poster
+    ? {
+        backgroundImage: `linear-gradient(180deg, rgba(6, 6, 8, 0.76) 0%, rgba(6, 6, 8, 0.88) 100%), url("${getMovieArtwork(selectedMovie)}")`,
+      }
+    : undefined;
+
+  const clearSnackSelection = () => {
+    setSnackCart({});
+  };
+
   const snackTotal = Object.entries(snackCart).reduce((sum, [id, qty]) => {
-    const s = snacks.find((x) => x.id === id);
+    const s = snacks.find((x) => (x._id || x.id) === id);
     return sum + (s ? s.price * qty : 0);
   }, 0);
 
@@ -88,6 +143,12 @@ function SellTicket() {
         body: JSON.stringify(ticketData),
       });
       if (response.ok) {
+        setOccupiedSeats((prev) => {
+          const next = new Set(prev);
+          selectedSeats.forEach((seat) => next.add(seat));
+          return next;
+        });
+        setSelectedSeats([]);
         setConfirmed(true);
       }
     } catch (error) {
@@ -113,7 +174,7 @@ function SellTicket() {
     : "✓  Confirm Ticket";
 
   return (
-    <div className="st-page">
+    <div className="st-page" style={pageBackdropStyle}>
 
       {/* ════════════════ LEFT ════════════════ */}
       <div className="st-left">
@@ -140,19 +201,29 @@ function SellTicket() {
 
         {/* BANNER */}
         <div className={`st-banner${!selectedMovie ? " st-banner--empty" : ""}`}>
-          {selectedMovie?.banner ? (
-            <>
-              <img src={selectedMovie.banner} alt={selectedMovie.title} className="st-banner-img" />
-              <div className="st-banner-grad">
+          {selectedMovie ? (
+            <div className="st-banner-layout">
+              {getMovieArtwork(selectedMovie) ? (
+                <div className="st-banner-art">
+                  <img src={getMovieArtwork(selectedMovie)} alt={selectedMovie.title} className="st-banner-img" />
+                </div>
+              ) : null}
+              <div className="st-banner-copy">
                 <p className="st-banner-genre">{selectedMovie.genre}</p>
                 <h2 className="st-banner-title">{selectedMovie.title}</h2>
+                <div className="st-banner-meta">
+                  <div className="st-banner-meta-row"><span>Director</span><strong>{selectedMovie.director || '—'}</strong></div>
+                  <div className="st-banner-meta-row"><span>Cast</span><strong>{selectedMovie.cast || '—'}</strong></div>
+                  <div className="st-banner-meta-row"><span>Showtimes</span><strong>{selectedMovie.showtimes || selectedMovie.time || '—'}</strong></div>
+                </div>
+                {selectedMovie.synopsis && <p className="st-banner-synopsis">{selectedMovie.synopsis}</p>}
                 <div className="st-chips">
-                  <span className="st-chip">{selectedMovie.time}</span>
                   <span className="st-chip">{selectedMovie.hall}</span>
+                  <span className="st-chip">{selectedMovie.ageRating || '—'}</span>
                   <span className="st-chip st-chip--red">ETB {selectedMovie.ticketPrice} / seat</span>
                 </div>
               </div>
-            </>
+            </div>
           ) : (
             <p className="st-banner-hint">
               {selectedMovie ? selectedMovie.title : "Select a movie to view session details"}
@@ -298,25 +369,29 @@ function SellTicket() {
                 <p className="st-modal-empty-sub">Connect to the database to populate the movie catalog.</p>
               </div>
             ) : (
-              <div className="st-movie-list">
+              <div className="st-movie-grid">
                 {movies.map((m) => (
                   <div
                     key={m._id}
-                    className={`st-movie-card${selectedMovie?.id === m.id ? " is-active" : ""}`}
+                    className={`st-movie-card${selectedMovie?._id === m._id ? " is-active" : ""}`}
                     onClick={() => {
                       setSelectedMovie(m);
                       setSelectedSeats([]);
                       setShowMoviePicker(false);
                     }}
                   >
-                    {m.banner && <img src={m.banner} alt={m.title} className="st-movie-card-img" />}
+                    <div className="st-movie-card-poster">
+                      {getMovieArtwork(m)
+                        ? <img src={getMovieArtwork(m)} alt={m.title} className="st-movie-card-img" />
+                        : <div className="st-movie-card-ph">No Poster</div>
+                      }
+                    </div>
                     <div className="st-movie-card-body">
                       <p className="st-movie-card-title">{m.title}</p>
                       <p className="st-movie-card-genre">{m.genre}</p>
-                      <div className="st-chips">
-                        <span className="st-chip">{m.time}</span>
-                        <span className="st-chip">{m.hall}</span>
-                        <span className="st-chip st-chip--red">ETB {m.price}</span>
+                      <div className="st-movie-card-meta">
+                        <span>{m.hall}</span>
+                        <span>ETB {m.ticketPrice || m.price}</span>
                       </div>
                     </div>
                   </div>
@@ -330,7 +405,7 @@ function SellTicket() {
       {/* ════════════════ SNACKS MODAL ════════════════ */}
       {showSnacks && (
         <div className="st-overlay" onClick={() => setShowSnacks(false)}>
-          <div className="st-modal st-modal--sm" onClick={(e) => e.stopPropagation()}>
+            <div className="st-modal st-modal--snacks" onClick={(e) => e.stopPropagation()}>
             <div className="st-modal-head">
               <h3 className="st-modal-title">SNACKS & DRINKS</h3>
               <button className="st-modal-close" onClick={() => setShowSnacks(false)}>✕</button>
@@ -343,22 +418,66 @@ function SellTicket() {
             ) : (
               <div className="st-snack-grid">
                 {snacks.map((s) => (
-                  <div key={s.id} className="st-snack-card">
-                    <span className="st-snack-emoji">{s.emoji || "Snacks"}</span>
-                    <p className="st-snack-name">{s.name}</p>
-                    <p className="st-snack-price">ETB {s.price}</p>
-                    <div className="st-counter">
-                      <button className="st-counter-btn" onClick={() => adjustSnack(s.id, -1)}>−</button>
-                      <span className="st-counter-val">{snackCart[s.id] || 0}</span>
-                      <button className="st-counter-btn" onClick={() => adjustSnack(s.id, 1)}>+</button>
+                  <div
+                    key={getSnackId(s)}
+                    className={`st-snack-card${getSnackCartQty(s) > 0 ? ' is-selected' : ''}`}
+                    style={buildSnackCardStyle(s)}
+                    onClick={() => adjustSnack(getSnackId(s), 1)}
+                  >
+                    <div className="st-snack-card-content">
+                      <div className="st-snack-card-head">
+                        <p className="st-snack-name">{s.name}</p>
+                        <p className="st-snack-price">ETB {s.price}</p>
+                      </div>
+
+                      <div className="st-snack-card-meta">
+                        <div className="st-snack-counter" onClick={(e) => e.stopPropagation()}>
+                          <button
+                            type="button"
+                            className="st-counter-btn"
+                            onClick={(e) => {
+                              e.stopPropagation();
+                              adjustSnack(getSnackId(s), -1);
+                            }}
+                          >
+                            −
+                          </button>
+                          <span className="st-counter-val">{getSnackCartQty(s)}</span>
+                          <button
+                            type="button"
+                            className="st-counter-btn"
+                            onClick={(e) => {
+                              e.stopPropagation();
+                              adjustSnack(getSnackId(s), 1);
+                            }}
+                          >
+                            +
+                          </button>
+                        </div>
+                        <div className="st-snack-footer-row">
+                          <span>Total</span>
+                          <strong>ETB {(s.price || 0) * getSnackCartQty(s)}</strong>
+                        </div>
+                      </div>
                     </div>
                   </div>
                 ))}
               </div>
             )}
             <div className="st-snack-footer">
-              <span className="st-snack-total">Total: <strong>ETB {snackTotal}</strong></span>
+              <div className="st-snack-footer-actions">
+                <button
+                  type="button"
+                  className="st-snack-clear"
+                  onClick={clearSnackSelection}
+                  disabled={snackTotal === 0}
+                >
+                  Clear selection
+                </button>
+                <span className="st-snack-total">Total: <strong>ETB {snackTotal}</strong></span>
+              </div>
               <button
+                type="button"
                 className="st-confirm-btn is-ready"
                 style={{ width: "auto", padding: "10px 24px" }}
                 onClick={() => setShowSnacks(false)}

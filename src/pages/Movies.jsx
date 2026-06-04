@@ -24,11 +24,67 @@ const EMPTY_FORM = {
   status: 'Now Showing',
 };
 
+const toMovieForm = (movie = EMPTY_FORM) => ({
+  title: movie.title || '',
+  poster: movie.poster || '',
+  hall: movie.hall || '',
+  genre: movie.genre || '',
+  ageRating: movie.ageRating || '',
+  language: movie.language || '',
+  duration: movie.duration !== undefined && movie.duration !== null ? String(movie.duration) : '',
+  director: movie.director || '',
+  cast: movie.cast || '',
+  synopsis: movie.synopsis || '',
+  ticketPrice: movie.ticketPrice !== undefined && movie.ticketPrice !== null ? String(movie.ticketPrice) : '',
+  showtimes: movie.showtimes || '',
+  status: movie.status || 'Now Showing',
+});
+
+const sameMovieForm = (left, right) => Object.keys(EMPTY_FORM).every((key) => (left?.[key] || '') === (right?.[key] || ''));
+
+const buildMoviePayload = (movieForm) => ({
+  title: movieForm.title.trim(),
+  poster: movieForm.poster.trim(),
+  hall: movieForm.hall,
+  genre: movieForm.genre,
+  ageRating: movieForm.ageRating,
+  language: movieForm.language,
+  duration: movieForm.duration.trim(),
+  director: movieForm.director.trim(),
+  cast: movieForm.cast.trim(),
+  synopsis: movieForm.synopsis.trim(),
+  ticketPrice: movieForm.ticketPrice.trim(),
+  showtimes: movieForm.showtimes.trim(),
+  status: movieForm.status,
+});
+
+const BULK_PLACEHOLDER = `[
+  {
+    "title": "Avatar: The Way of Water",
+    "poster": "https://...",
+    "hall": "Hall A",
+    "genre": "Adventure",
+    "ageRating": "PG",
+    "language": "English",
+    "duration": 192,
+    "director": "James Cameron",
+    "cast": "Sam Worthington, Zoe Saldana",
+    "synopsis": "...",
+    "ticketPrice": 360,
+    "showtimes": "4:00, 7:00",
+    "status": "Now Showing"
+  }
+]`;
+
 function MoviesPage() {
   const [movies, setMovies] = useState([]); // ← be database ekeyrewalehu
   const [showModal, setShowModal] = useState(false);
   const [editTarget, setEditTarget] = useState(null); // null new mihonew for now
   const [form, setForm] = useState(EMPTY_FORM);
+  const [initialForm, setInitialForm] = useState(EMPTY_FORM);
+  const [bulkMode, setBulkMode] = useState(false);
+  const [bulkJson, setBulkJson] = useState('');
+  const [bulkError, setBulkError] = useState('');
   const [posterPreview, setPosterPreview] = useState('');
   const [deleteConfirm, setDeleteConfirm] = useState(null);
   const [search, setSearch] = useState('');
@@ -54,6 +110,10 @@ function MoviesPage() {
   const openAdd = () => {
     setEditTarget(null);
     setForm(EMPTY_FORM);
+    setInitialForm(EMPTY_FORM);
+    setBulkMode(false);
+    setBulkJson('');
+    setBulkError('');
     setPosterPreview('');
     setErrors({});
     setShowModal(true);
@@ -61,7 +121,12 @@ function MoviesPage() {
 
   const openEdit = (movie) => {
     setEditTarget(movie._id);
-    setForm({ ...movie });
+    const nextForm = toMovieForm(movie);
+    setForm(nextForm);
+    setInitialForm(nextForm);
+    setBulkMode(false);
+    setBulkJson('');
+    setBulkError('');
     setPosterPreview(movie.poster || '');
     setErrors({});
     setShowModal(true);
@@ -71,6 +136,7 @@ function MoviesPage() {
     setShowModal(false);
     setEditTarget(null);
     setErrors({});
+    setBulkError('');
   };
 
   const set = (key, val) => setForm((p) => ({ ...p, [key]: val }));
@@ -100,23 +166,77 @@ function MoviesPage() {
     return Object.keys(e).length === 0;
   };
 
+  const parseBulkMovies = (value) => {
+    let parsed;
+
+    try {
+      parsed = JSON.parse(value);
+    } catch {
+      return { error: 'Paste valid JSON. Use one object or an array of movie objects.' };
+    }
+
+    const items = Array.isArray(parsed) ? parsed : [parsed];
+
+    if (items.length === 0) {
+      return { error: 'Add at least one movie object.' };
+    }
+
+    try {
+      const moviesToCreate = items.map((item, index) => {
+        if (!item || typeof item !== 'object' || Array.isArray(item)) {
+          throw new Error(`Item ${index + 1} must be a movie object.`);
+        }
+
+        const payload = buildMoviePayload({ ...EMPTY_FORM, ...item });
+
+        if (!payload.title || !payload.hall || !payload.genre || !payload.ageRating || !payload.duration || !payload.ticketPrice) {
+          throw new Error(`Movie ${index + 1} is missing required fields.`);
+        }
+
+        return payload;
+      });
+
+      return { movies: moviesToCreate };
+    } catch (error) {
+      return { error: error.message || 'Invalid bulk movie data.' };
+    }
+  };
+
   const handleSave = async () => {
-    if (!validate()) return;
     try {
       if (editTarget !== null) {
+        if (!validate()) return;
+        if (sameMovieForm(form, initialForm)) return;
         const response = await fetch(`${API_BASE}/movies/${editTarget}`, {
           method: 'PUT',
           headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify(form),
+          body: JSON.stringify(buildMoviePayload(form)),
         });
         if (response.ok) {
           fetchMovies(); // Refresh list
         }
-      } else {
+      } else if (bulkMode) {
+        setBulkError('');
+        const parsed = parseBulkMovies(bulkJson);
+        if (parsed.error) {
+          setBulkError(parsed.error);
+          return;
+        }
+
         const response = await fetch(`${API_BASE}/movies`, {
           method: 'POST',
           headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify(form),
+          body: JSON.stringify(parsed.movies),
+        });
+        if (response.ok) {
+          fetchMovies();
+        }
+      } else {
+        if (!validate()) return;
+        const response = await fetch(`${API_BASE}/movies`, {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify(buildMoviePayload(form)),
         });
         if (response.ok) {
           fetchMovies(); // Refresh list
@@ -148,6 +268,10 @@ function MoviesPage() {
     const matchStatus = filterStatus === 'All' || m.status === filterStatus;
     return matchSearch && matchGenre && matchStatus;
   });
+
+  const isEditDirty = editTarget !== null && !sameMovieForm(form, initialForm);
+  const canSaveMovie = editTarget === null ? (bulkMode ? bulkJson.trim().length > 0 : true) : isEditDirty;
+  const saveButtonLabel = editTarget !== null ? 'Save Changes' : bulkMode ? 'Add Movies' : 'Add Movie';
 
   return (
     <div className="mv-page">
@@ -223,55 +347,116 @@ function MoviesPage() {
       
       {showModal && (
         <div className="mv-overlay" onClick={closeModal}>
-          <div className="mv-modal" onClick={(e) => e.stopPropagation()}>
+          <div className={`mv-modal${bulkMode ? ' mv-modal--bulk' : ''}`} onClick={(e) => e.stopPropagation()}>
 
             <div className="mv-modal-head">
               <h2 className="mv-modal-title">{editTarget !== null ? 'EDIT MOVIE' : 'ADD MOVIE'}</h2>
               <button className="mv-modal-close" onClick={closeModal}>✕</button>
             </div>
 
+            {editTarget === null && (
+              <div className="mv-mode-switch">
+                <button
+                  type="button"
+                  className={`mv-mode-btn${!bulkMode ? ' active' : ''}`}
+                  onClick={() => {
+                    setBulkMode(false);
+                    setBulkError('');
+                  }}
+                >
+                  Single Movie
+                </button>
+                <button
+                  type="button"
+                  className={`mv-mode-btn${bulkMode ? ' active' : ''}`}
+                  onClick={() => {
+                    setBulkMode(true);
+                    setErrors({});
+                  }}
+                >
+                  Bulk JSON
+                </button>
+              </div>
+            )}
+
             <div className="mv-modal-body">
 
               {/* LEFT: POSTER */}
               <div className="mv-modal-left">
-                <div className="mv-poster-preview">
-                  {posterPreview
-                    ? <img src={posterPreview} alt="Poster preview" />
-                    : <div className="mv-poster-ph"><span>No Poster</span></div>
-                  }
-                </div>
-                <div className="mv-field">
-                  <label className="mv-label">Poster URL</label>
-                  <input
-                    className="mv-input"
-                    placeholder="https://..."
-                    value={form.poster}
-                    onChange={(e) => handlePosterURL(e.target.value)}
-                  />
-                </div>
-                <div className="mv-field">
-                  <label className="mv-label">Or Upload Image</label>
-                  <label className="mv-file-btn">
-                    Choose File
-                    <input type="file" accept="image/*" onChange={handlePosterFile} hidden />
-                  </label>
-                </div>
-                <div className="mv-field">
-                  <label className="mv-label">Status</label>
-                  <div className="mv-radio-group">
-                    {['Now Showing', 'Coming Soon', 'Ended'].map((s) => (
-                      <label key={s} className={`mv-radio${form.status === s ? ' active' : ''}`}>
-                        <input type="radio" name="status" value={s} checked={form.status === s}
-                          onChange={() => set('status', s)} hidden />
-                        {s}
-                      </label>
-                    ))}
+                {bulkMode ? (
+                  <div className="mv-bulk-guide">
+                    <p className="mv-bulk-title">Bulk add movies with JSON</p>
+                    <p className="mv-bulk-copy">
+                      Paste one movie object or an array of movie objects. Required fields are title, hall, genre,
+                      ageRating, duration and ticketPrice.
+                    </p>
+                    <p className="mv-bulk-copy mv-bulk-copy--muted">
+                      Optional fields: poster, language, director, cast, synopsis, showtimes, status.
+                    </p>
                   </div>
-                </div>
+                ) : (
+                  <>
+                    <div className="mv-poster-preview">
+                      {posterPreview
+                        ? <img src={posterPreview} alt="Poster preview" />
+                        : <div className="mv-poster-ph"><span>No Poster</span></div>
+                      }
+                    </div>
+                    <div className="mv-field">
+                      <label className="mv-label">Poster URL</label>
+                      <input
+                        className="mv-input"
+                        placeholder="https://..."
+                        value={form.poster}
+                        onChange={(e) => handlePosterURL(e.target.value)}
+                      />
+                    </div>
+                    <div className="mv-field">
+                      <label className="mv-label">Or Upload Image</label>
+                      <label className="mv-file-btn">
+                        Choose File
+                        <input type="file" accept="image/*" onChange={handlePosterFile} hidden />
+                      </label>
+                    </div>
+                    <div className="mv-field">
+                      <label className="mv-label">Status</label>
+                      <div className="mv-radio-group">
+                        {['Now Showing', 'Coming Soon', 'Ended'].map((s) => (
+                          <label key={s} className={`mv-radio${form.status === s ? ' active' : ''}`}>
+                            <input type="radio" name="status" value={s} checked={form.status === s}
+                              onChange={() => set('status', s)} hidden />
+                            {s}
+                          </label>
+                        ))}
+                      </div>
+                    </div>
+                  </>
+                )}
               </div>
 
              
               <div className="mv-modal-right">
+
+                {bulkMode ? (
+                  <>
+                    <div className={`mv-field${bulkError ? ' mv-field--err' : ''}`}>
+                      <label className="mv-label">Bulk JSON *</label>
+                      <textarea
+                        className="mv-input mv-textarea mv-bulk-textarea"
+                        rows={16}
+                        placeholder={BULK_PLACEHOLDER}
+                        value={bulkJson}
+                        onChange={(e) => {
+                          setBulkJson(e.target.value);
+                          setBulkError('');
+                        }}
+                      />
+                      {bulkError && <span className="mv-err">{bulkError}</span>}
+                    </div>
+                    <p className="mv-bulk-note">You can paste a single object or a JSON array of multiple movies.</p>
+                  </>
+                ) : (
+                  <>
 
                 {/* TITLE */}
                 <div className={`mv-field${errors.title ? ' mv-field--err' : ''}`}>
@@ -370,14 +555,17 @@ function MoviesPage() {
                     value={form.synopsis} onChange={(e) => set('synopsis', e.target.value)} />
                 </div>
 
+                  </>
+                )}
+
               </div>
             </div>
 
             {/* FOOTER */}
             <div className="mv-modal-foot">
               <button className="mv-btn-cancel" onClick={closeModal}>Cancel</button>
-              <button className="mv-btn-save" onClick={handleSave}>
-                {editTarget !== null ? 'Save Changes' : 'Add Movie'}
+              <button className="mv-btn-save" onClick={handleSave} disabled={!canSaveMovie}>
+                {saveButtonLabel}
               </button>
             </div>
 
