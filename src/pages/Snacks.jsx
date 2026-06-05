@@ -16,7 +16,7 @@ const EMPTY_FORM = {
 };
 
 function SnacksPage() {
-  const [snacks, setSnacks] = useState([]); // ← replace with DB fetch
+  const [snacks, setSnacks] = useState([]); 
   const [showModal, setShowModal] = useState(false);
   const [editTarget, setEditTarget] = useState(null);
   const [form, setForm] = useState(EMPTY_FORM);

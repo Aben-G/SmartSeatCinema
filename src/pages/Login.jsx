@@ -77,7 +77,7 @@ function Login() {
             <input type="checkbox" />
             Stay logged in
           </label>
-          <span className="ForgotPass">Forgot password?</span>
+          
         </div>
 
         <button className="LoginBtn" type="submit">Login →</button>
