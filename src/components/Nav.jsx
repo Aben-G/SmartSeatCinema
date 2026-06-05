@@ -34,7 +34,7 @@ function Navbar({ searchQuery, onSearchChange }) {
       <div className="NavTitle">{pageTitle}</div>
 
       <div className="NavRight">
-        <div className="NavSearch">
+        {/* <div className="NavSearch">
           
           <input
             type="text"
@@ -45,7 +45,7 @@ function Navbar({ searchQuery, onSearchChange }) {
           {searchQuery && (
             <button className="NavSearchClear" onClick={() => onSearchChange('')}>✕</button>
           )}
-        </div>
+        </div> */}
 
         <div className="NavUser">
           <span className="NavWelcome">Welcome, {user}</span>

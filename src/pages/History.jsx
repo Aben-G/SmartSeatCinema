@@ -14,11 +14,6 @@ function fmt(iso) {
   });
 }
 
-function fmtDate(iso) {
-  if (!iso) return '—';
-  return new Date(iso).toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' });
-}
-
 function printReceipt(sale) {
   const w = window.open('', '_blank', 'width=380,height=600');
   const snackRows = (sale.items || []).map(i =>
@@ -72,7 +67,7 @@ function exportCSV(data) {
     s.movie || '', s.hall || '', s.time || '',
     (s.seats || []).join(' '),
     s.customer || '',
-    (s.items || []).map(i => `${i.name}×${i.qty}`).join(' | '),
+    (s.items || []).map(i => `${i.name}x${i.qty}`).join(' | '),
     s.payment, s.total,
   ]);
   const csv = [headers, ...rows].map(r => r.map(c => `"${c}"`).join(',')).join('\n');
@@ -84,9 +79,8 @@ function exportCSV(data) {
 }
 
 export default function HistoryPage() {
-  const [sales, setSales] = useState([]);
-  const [search, setSearch]         = useState('');
-  const [typeFilter, setTypeFilter] = useState('All');   // All | ticket | snack
+  const [sales, setSales]           = useState([]);
+  const [typeFilter, setTypeFilter] = useState('All');
   const [payFilter, setPayFilter]   = useState('All');
   const [dateFrom, setDateFrom]     = useState('');
   const [dateTo, setDateTo]         = useState('');
@@ -102,7 +96,6 @@ export default function HistoryPage() {
     try {
       const response = await fetch(`${API_BASE}/history`);
       const data = await response.json();
-      // Map tickets to sales format
       const mapped = data.map(ticket => ({
         id: ticket._id,
         date: ticket.createdAt,
@@ -112,7 +105,7 @@ export default function HistoryPage() {
         payment: ticket.payment,
         total: ticket.total,
         seats: ticket.seats,
-        items: [], // For now
+        items: [],
       }));
       setSales(mapped);
     } catch (error) {
@@ -120,22 +113,17 @@ export default function HistoryPage() {
     }
   };
 
+  // FIX: sales is now included in the dependency array
   const filtered = useMemo(() => {
     return sales.filter(s => {
-      const q = search.toLowerCase();
-      const matchSearch =
-        (s.movie  || '').toLowerCase().includes(q) ||
-        (s.customer || '').toLowerCase().includes(q) ||
-        String(s.id).includes(q) ||
-        (s.items || []).some(i => i.name.toLowerCase().includes(q));
       const matchType = typeFilter === 'All' || s.type === typeFilter;
       const matchPay  = payFilter  === 'All' || s.payment === payFilter;
       const d = new Date(s.date);
       const matchFrom = !dateFrom || d >= new Date(dateFrom);
       const matchTo   = !dateTo   || d <= new Date(dateTo + 'T23:59:59');
-      return matchSearch && matchType && matchPay && matchFrom && matchTo;
+      return matchType && matchPay && matchFrom && matchTo;
     }).sort((a, b) => new Date(b.date) - new Date(a.date));
-  }, [search, typeFilter, payFilter, dateFrom, dateTo]);
+  }, [sales, typeFilter, payFilter, dateFrom, dateTo]);
 
   const totalPages = Math.max(1, Math.ceil(filtered.length / PER_PAGE));
   const paginated  = filtered.slice((page - 1) * PER_PAGE, page * PER_PAGE);
@@ -144,19 +132,18 @@ export default function HistoryPage() {
   const ticketCount  = filtered.filter(r => r.type === 'ticket').length;
   const snackCount   = filtered.filter(r => r.type === 'snack').length;
 
+  const hasActiveFilters = typeFilter !== 'All' || payFilter !== 'All' || dateFrom || dateTo;
+
   const resetFilters = () => {
-    setSearch(''); setTypeFilter('All'); setPayFilter('All');
+    setTypeFilter('All'); setPayFilter('All');
     setDateFrom(''); setDateTo(''); setPage(1);
   };
 
   return (
     <div className="hy-page">
 
-    
       <div className="hy-topbar">
         <div className="hy-filters">
-         
-
           <select className="hy-filter" value={typeFilter}
             onChange={e => { setTypeFilter(e.target.value); setPage(1); }}>
             <option value="All">All Types</option>
@@ -171,22 +158,21 @@ export default function HistoryPage() {
 
           <input className="hy-filter hy-date" type="date" value={dateFrom}
             onChange={e => { setDateFrom(e.target.value); setPage(1); }} />
-          <span className="hy-date-sep">→</span>
+          <span className="hy-date-sep">to</span>
           <input className="hy-filter hy-date" type="date" value={dateTo}
             onChange={e => { setDateTo(e.target.value); setPage(1); }} />
 
-          {(search || typeFilter !== 'All' || payFilter !== 'All' || dateFrom || dateTo) && (
+          {hasActiveFilters && (
             <button className="hy-reset-btn" onClick={resetFilters}>Clear</button>
           )}
         </div>
 
         <button className="hy-export-btn" onClick={() => exportCSV(filtered)}
           disabled={filtered.length === 0}>
-          ↓ Export CSV
+          Export CSV
         </button>
       </div>
 
-     
       <div className="hy-summary">
         <div className="hy-sum-card">
           <span className="hy-sum-label">Total Records</span>
@@ -206,7 +192,6 @@ export default function HistoryPage() {
         </div>
       </div>
 
-      
       {filtered.length === 0 ? (
         <div className="hy-empty">
           <p className="hy-empty-title">{sales.length === 0 ? 'No sales recorded yet' : 'No results found'}</p>
@@ -236,7 +221,7 @@ export default function HistoryPage() {
               <tbody>
                 {paginated.map(s => (
                   <tr key={s.id} className="hy-row" onClick={() => setDetail(s)}>
-                    <td className="hy-id">#{s.id}</td>
+                    <td className="hy-id">#{String(s.id).slice(-6)}</td>
                     <td>
                       <span className={`hy-type-badge hy-type--${s.type}`}>
                         {s.type === 'ticket' ? 'Ticket' : 'Snack'}
@@ -246,7 +231,7 @@ export default function HistoryPage() {
                     <td className="hy-details-cell">
                       {s.type === 'ticket'
                         ? <>{s.movie || '—'} <span className="hy-sub">· {s.hall} · {s.time}</span></>
-                        : <span className="hy-sub">{(s.items || []).map(i => `${i.name} ×${i.qty}`).join(', ') || '—'}</span>
+                        : <span className="hy-sub">{(s.items || []).map(i => `${i.name} x${i.qty}`).join(', ') || '—'}</span>
                       }
                     </td>
                     <td className="hy-customer">{s.customer || <span className="hy-sub">Walk-in</span>}</td>
@@ -263,11 +248,10 @@ export default function HistoryPage() {
             </table>
           </div>
 
-         
           {totalPages > 1 && (
             <div className="hy-pagination">
               <button className="hy-page-btn" disabled={page === 1}
-                onClick={() => setPage(p => p - 1)}>← Prev</button>
+                onClick={() => setPage(p => p - 1)}>Prev</button>
               <div className="hy-page-nums">
                 {Array.from({ length: totalPages }, (_, i) => i + 1).map(n => (
                   <button key={n}
@@ -276,13 +260,12 @@ export default function HistoryPage() {
                 ))}
               </div>
               <button className="hy-page-btn" disabled={page === totalPages}
-                onClick={() => setPage(p => p + 1)}>Next →</button>
+                onClick={() => setPage(p => p + 1)}>Next</button>
             </div>
           )}
         </>
       )}
 
-     
       {detail && (
         <div className="hy-overlay" onClick={() => setDetail(null)}>
           <div className="hy-modal" onClick={e => e.stopPropagation()}>
@@ -292,13 +275,13 @@ export default function HistoryPage() {
                 <span className={`hy-type-badge hy-type--${detail.type}`}>
                   {detail.type === 'ticket' ? 'Ticket Sale' : 'Snack Sale'}
                 </span>
-                <h2 className="hy-modal-title">Sale #{detail.id}</h2>
+                <h2 className="hy-modal-title">Sale #{String(detail.id).slice(-6)}</h2>
               </div>
               <div className="hy-modal-head-right">
                 <button className="hy-print-btn" onClick={() => printReceipt(detail)}>
-                  🖨 Print Receipt
+                  Print Receipt
                 </button>
-                <button className="hy-modal-close" onClick={() => setDetail(null)}>✕</button>
+                <button className="hy-modal-close" onClick={() => setDetail(null)}>X</button>
               </div>
             </div>
 
