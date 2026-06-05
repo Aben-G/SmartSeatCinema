@@ -120,7 +120,7 @@ function SellTicket() {
     return sum + (s ? s.price * qty : 0);
   }, 0);
 
-  const ticketTotal = selectedSeats.length * (selectedMovie?.ticketPrice || 0);
+  const ticketTotal = selectedSeats.length * Number(selectedMovie?.ticketPrice || 0);
   const grandTotal = ticketTotal + snackTotal;
   const canConfirm = selectedMovie && selectedSeats.length > 0 && payment;
 
@@ -495,7 +495,7 @@ function SellTicket() {
       {confirmed && confirmedBooking && (
         <div className="st-overlay st-overlay--dark">
           <div className="st-receipt-card">
-            <div className="st-receipt-icon">✓</div>
+            <div className="st-receipt-check">✓</div>
             <h2 className="st-receipt-title">BOOKING CONFIRMED</h2>
             {confirmedBooking.customerName && (
               <p className="st-receipt-sub">Thank you, {confirmedBooking.customerName}!</p>
@@ -504,14 +504,16 @@ function SellTicket() {
               <div className="st-rrow"><span>Movie</span><strong>{confirmedBooking.movie?.title}</strong></div>
               <div className="st-rrow"><span>Hall</span><strong>{confirmedBooking.movie?.hall}</strong></div>
               <div className="st-rrow"><span>Time</span><strong>{confirmedBooking.movie?.time}</strong></div>
-              <div className="st-rrow"><span>Seats</span><strong>{confirmedBooking.seats.join(", ")}</strong></div>
+              <div className="st-rrow"><span>Seats ({confirmedBooking.seats.length})</span><strong>{confirmedBooking.seats.join(", ")}</strong></div>
+              <div className="st-rdivider" />
+              <div className="st-rrow"><span>Tickets Total</span><strong>ETB {confirmedBooking.seats.length * Number(confirmedBooking.movie?.ticketPrice || 0)}</strong></div>
               {confirmedBooking.snackTotal > 0 && (
                 <div className="st-rrow"><span>Snacks</span><strong>ETB {confirmedBooking.snackTotal}</strong></div>
               )}
               <div className="st-rrow"><span>Payment</span><strong>{confirmedBooking.payment}</strong></div>
               <div className="st-rdivider" />
               <div className="st-rrow st-rrow--total">
-                <span>GRAND TOTAL</span>
+                <span>TOTAL PAID</span>
                 <strong className="st-red">ETB {confirmedBooking.grandTotal}</strong>
               </div>
             </div>

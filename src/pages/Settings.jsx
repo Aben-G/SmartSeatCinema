@@ -3,14 +3,6 @@ import '../styles/settings.css';
 
 const API_BASE = 'http://localhost:5000/api';
 
-const THEMES = [
-  { id: 'red',    label: 'Crimson',  color: '#cc1a1a' },
-  { id: 'blue',   label: 'Electric', color: '#1a6acc' },
-  { id: 'green',  label: 'Emerald',  color: '#1acc6a' },
-  { id: 'gold',   label: 'Gold',     color: '#cc991a' },
-  { id: 'purple', label: 'Violet',   color: '#7a1acc' },
-];
-
 function Toggle({ checked, onChange }) {
   return (
     <button className={`sg-toggle ${checked ? 'on' : ''}`} onClick={() => onChange(!checked)}>
@@ -20,11 +12,11 @@ function Toggle({ checked, onChange }) {
 }
 
 export default function Settings() {
-  const [theme, setTheme]       = useState('red');
-  const [compact, setCompact]   = useState(false);
-  const [sound, setSound]       = useState(true);
   const [currency, setCurrency] = useState('ETB');
   const [saved, setSaved]       = useState(false);
+
+  const [autoBackup, setAutoBackup] = useState(true);
+  const [thermalPrint, setThermalPrint] = useState(false);
 
   const [newUsername, setNewUsername] = useState('');
   const [newPassword, setNewPassword] = useState('');
@@ -92,41 +84,27 @@ export default function Settings() {
   };
 
   return (
-    <div className="sg-page">
-    
+    <div className="sg-page" style={{ maxWidth: '800px' }}>
 
       <div className="sg-card">
-        <p className="sg-card-title">Accent Color</p>
-        <div className="sg-swatches">
-          {THEMES.map(t => (
-            <button
-              key={t.id}
-              className={`sg-swatch ${theme === t.id ? 'active' : ''}`}
-              style={{ background: t.color }}
-              onClick={() => setTheme(t.id)}
-              title={t.label}
-            />
-          ))}
-        </div>
-      </div>
+        <p className="sg-card-title">System Configuration</p>
 
-      <div className="sg-card">
         <div className="sg-row">
           <div>
-            <p className="sg-row-label">Compact Mode</p>
-            <p className="sg-row-hint">Reduce spacing across the UI</p>
+            <p className="sg-row-label">Automatic DB Backups</p>
+            <p className="sg-row-hint">Sync to cloud every 24 hours</p>
           </div>
-          <Toggle checked={compact} onChange={setCompact} />
+          <Toggle checked={autoBackup} onChange={setAutoBackup} />
         </div>
 
         <div className="sg-divider" />
 
         <div className="sg-row">
           <div>
-            <p className="sg-row-label">Sound Alerts</p>
-            <p className="sg-row-hint">Play sound on ticket confirmation</p>
+            <p className="sg-row-label">Thermal Printer Support</p>
+            <p className="sg-row-hint">Enable direct printing for POS hardware</p>
           </div>
-          <Toggle checked={sound} onChange={setSound} />
+          <Toggle checked={thermalPrint} onChange={setThermalPrint} />
         </div>
 
         <div className="sg-divider" />
@@ -143,6 +121,16 @@ export default function Settings() {
           >
             {['ETB', 'USD', 'EUR', 'GBP'].map(c => <option key={c}>{c}</option>)}
           </select>
+        </div>
+
+        <div className="sg-divider" />
+
+        <div className="sg-row">
+          <div>
+            <p className="sg-row-label">Server Status</p>
+            <p className="sg-row-hint">Region: East-Africa (Addis-Ababa)</p>
+          </div>
+          <strong style={{ color: '#1acc6a', fontSize: '11px', letterSpacing: '0.05em' }}>ONLINE</strong>
         </div>
       </div>
 

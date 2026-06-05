@@ -103,3 +103,62 @@
   padding: 16px 0;
   text-align: center;
 }
+
+.db-list {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+}
+
+.db-list-item {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 12px 14px;
+  background: rgba(255, 255, 255, 0.03);
+  border-radius: 10px;
+  border: 1px solid transparent;
+  transition: all 0.2s ease;
+}
+
+.db-list-item:hover {
+  background: rgba(255, 255, 255, 0.05);
+  border-color: rgba(180, 20, 20, 0.2);
+  transform: translateX(4px);
+}
+
+.db-list-info {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+}
+
+.db-list-name {
+  font-size: 13.5px;
+  font-weight: 500;
+  color: #e0e0e0;
+}
+
+.db-list-sub {
+  font-size: 11px;
+  color: rgba(255, 255, 255, 0.25);
+}
+
+.db-list-val {
+  font-family: 'DM Sans', sans-serif;
+  font-size: 13px;
+  font-weight: 600;
+  color: #f0f0f0;
+}
+
+.db-badge {
+  font-size: 10px;
+  padding: 3px 10px;
+  background: rgba(180, 20, 20, 0.15);
+  color: #ff4d4d;
+  border: 1px solid rgba(180, 20, 20, 0.3);
+  border-radius: 20px;
+  text-transform: uppercase;
+  font-weight: 600;
+  letter-spacing: 0.02em;
+}
