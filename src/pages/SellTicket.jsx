@@ -3,11 +3,13 @@ import "../styles/sellTicket.css";
 
 const API_BASE = 'http://localhost:5000/api';
 
+// ✅ These are constants — they belong outside the component (correct)
 const ROWS = ["A", "B", "C", "D", "E", "F", "G", "H", "I"];
 const COLS = Array.from({ length: 16 }, (_, i) => i + 1);
 const PAYMENT_METHODS = ["Cash", "Card", "Telebirr", "CBE Birr"];
 
 function SellTicket() {
+  // ✅ ALL useState hooks must be inside the component function
   const [customerName, setCustomerName] = useState("");
   const [selectedMovie, setSelectedMovie] = useState(null);
   const [selectedSeats, setSelectedSeats] = useState([]);
@@ -16,6 +18,7 @@ function SellTicket() {
   const [showSnacks, setShowSnacks] = useState(false);
   const [snackCart, setSnackCart] = useState({});
   const [confirmed, setConfirmed] = useState(false);
+  const [confirmedBooking, setConfirmedBooking] = useState(null); // ✅ moved inside
   const [movies, setMovies] = useState([]);
   const [snacks, setSnacks] = useState([]);
   const [occupiedSeats, setOccupiedSeats] = useState(new Set());
@@ -31,24 +34,20 @@ function SellTicket() {
         setOccupiedSeats(new Set());
         return;
       }
-
       try {
         const response = await fetch(`${API_BASE}/tickets`);
         const tickets = await response.json();
         const nextOccupiedSeats = new Set();
-
         tickets
           .filter((ticket) => String(ticket.movieId?._id || ticket.movieId) === String(selectedMovie._id))
           .forEach((ticket) => {
             (ticket.seats || []).forEach((seat) => nextOccupiedSeats.add(seat));
           });
-
         setOccupiedSeats(nextOccupiedSeats);
       } catch (error) {
         console.error('Error loading occupied seats:', error);
       }
     };
-
     loadOccupiedSeats();
   }, [selectedMovie]);
 
@@ -143,6 +142,15 @@ function SellTicket() {
         body: JSON.stringify(ticketData),
       });
       if (response.ok) {
+        // ✅ Snapshot everything BEFORE clearing state
+        setConfirmedBooking({
+          customerName,
+          movie: selectedMovie,
+          seats: [...selectedSeats],
+          snackTotal,
+          grandTotal,
+          payment,
+        });
         setOccupiedSeats((prev) => {
           const next = new Set(prev);
           selectedSeats.forEach((seat) => next.add(seat));
@@ -158,6 +166,7 @@ function SellTicket() {
 
   const handleReset = () => {
     setConfirmed(false);
+    setConfirmedBooking(null);
     setSelectedSeats([]);
     setSelectedMovie(null);
     setSnackCart({});
@@ -226,7 +235,7 @@ function SellTicket() {
             </div>
           ) : (
             <p className="st-banner-hint">
-              {selectedMovie ? selectedMovie.title : "Select a movie to view session details"}
+              Select a movie to view session details
             </p>
           )}
         </div>
@@ -405,7 +414,7 @@ function SellTicket() {
       {/* ════════════════ SNACKS MODAL ════════════════ */}
       {showSnacks && (
         <div className="st-overlay" onClick={() => setShowSnacks(false)}>
-            <div className="st-modal st-modal--snacks" onClick={(e) => e.stopPropagation()}>
+          <div className="st-modal st-modal--snacks" onClick={(e) => e.stopPropagation()}>
             <div className="st-modal-head">
               <h3 className="st-modal-title">SNACKS & DRINKS</h3>
               <button className="st-modal-close" onClick={() => setShowSnacks(false)}>✕</button>
@@ -429,16 +438,12 @@ function SellTicket() {
                         <p className="st-snack-name">{s.name}</p>
                         <p className="st-snack-price">ETB {s.price}</p>
                       </div>
-
                       <div className="st-snack-card-meta">
                         <div className="st-snack-counter" onClick={(e) => e.stopPropagation()}>
                           <button
                             type="button"
                             className="st-counter-btn"
-                            onClick={(e) => {
-                              e.stopPropagation();
-                              adjustSnack(getSnackId(s), -1);
-                            }}
+                            onClick={(e) => { e.stopPropagation(); adjustSnack(getSnackId(s), -1); }}
                           >
                             −
                           </button>
@@ -446,10 +451,7 @@ function SellTicket() {
                           <button
                             type="button"
                             className="st-counter-btn"
-                            onClick={(e) => {
-                              e.stopPropagation();
-                              adjustSnack(getSnackId(s), 1);
-                            }}
+                            onClick={(e) => { e.stopPropagation(); adjustSnack(getSnackId(s), 1); }}
                           >
                             +
                           </button>
@@ -490,24 +492,27 @@ function SellTicket() {
       )}
 
       {/* ════════════════ CONFIRMATION SCREEN ════════════════ */}
-      {confirmed && (
+      {confirmed && confirmedBooking && (
         <div className="st-overlay st-overlay--dark">
           <div className="st-receipt-card">
-            <div className="st-receipt-icon"></div>
+            <div className="st-receipt-icon">✓</div>
             <h2 className="st-receipt-title">BOOKING CONFIRMED</h2>
-            {customerName && <p className="st-receipt-sub">Thank you, {customerName}!</p>}
+            {confirmedBooking.customerName && (
+              <p className="st-receipt-sub">Thank you, {confirmedBooking.customerName}!</p>
+            )}
             <div className="st-receipt-body">
-              <div className="st-rrow"><span>Movie</span><strong>{selectedMovie?.title}</strong></div>
-              <div className="st-rrow"><span>Hall</span><strong>{selectedMovie?.hall}</strong></div>
-              <div className="st-rrow"><span>Time</span><strong>{selectedMovie?.time}</strong></div>
-              <div className="st-rrow"><span>Seats</span><strong>{selectedSeats.join(", ")}</strong></div>
-              {snackTotal > 0 && (
-                <div className="st-rrow"><span>Snacks</span><strong>ETB {snackTotal}</strong></div>
+              <div className="st-rrow"><span>Movie</span><strong>{confirmedBooking.movie?.title}</strong></div>
+              <div className="st-rrow"><span>Hall</span><strong>{confirmedBooking.movie?.hall}</strong></div>
+              <div className="st-rrow"><span>Time</span><strong>{confirmedBooking.movie?.time}</strong></div>
+              <div className="st-rrow"><span>Seats</span><strong>{confirmedBooking.seats.join(", ")}</strong></div>
+              {confirmedBooking.snackTotal > 0 && (
+                <div className="st-rrow"><span>Snacks</span><strong>ETB {confirmedBooking.snackTotal}</strong></div>
               )}
-              <div className="st-rrow"><span>Payment</span><strong>{payment}</strong></div>
+              <div className="st-rrow"><span>Payment</span><strong>{confirmedBooking.payment}</strong></div>
               <div className="st-rdivider" />
               <div className="st-rrow st-rrow--total">
-                <span>GRAND TOTAL</span><strong className="st-red">ETB {grandTotal}</strong>
+                <span>GRAND TOTAL</span>
+                <strong className="st-red">ETB {confirmedBooking.grandTotal}</strong>
               </div>
             </div>
             <button className="st-confirm-btn is-ready" onClick={handleReset}>
@@ -516,6 +521,7 @@ function SellTicket() {
           </div>
         </div>
       )}
+
     </div>
   );
 }
